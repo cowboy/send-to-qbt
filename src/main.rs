@@ -1,10 +1,9 @@
-use anyhow::{Result, anyhow, ensure};
+use anyhow::{Context, Result, anyhow, ensure};
 use notify_rust::Notification;
 use qbittorrent_rust::{
     core::{api::QbitApi, creds::Credentials},
     *,
 };
-use std::{env, path::PathBuf};
 use tokio;
 
 // given the API object and the torrent URI, adds the torrent with default options
@@ -35,8 +34,9 @@ struct Config {
 impl Config {
     // expects config file at $HOME/.config/send-to-qbt/config.toml
     fn from_toml() -> Result<Config> {
-        let home = env::var("HOME")?;
-        let path = PathBuf::from(format!("{}/.config/send-to-qbt/config.toml", home));
+        let path = home::home_dir()
+            .context("Could not determine home directory")?
+            .join(".config/send-to-qbt/config.toml");
 
         let settings = config::Config::builder()
             .add_source(config::File::from(path))
